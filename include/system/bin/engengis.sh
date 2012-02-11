@@ -82,29 +82,31 @@ else
     sleep 1
 fi;
 
+if [ -e $CONFIG ]; then
+    echo "Configuration file = Ok" >> $LOG;
+else
+    touch $CONFIG;
+    sleep 1
+    echo "otasupport=off" >> $CONFIG;
+    echo "status=firstboot" >> $CONFIG;
+    echo "automaticrestore=on" >> $CONFIG;
+    echo "Configuration file created" >> $LOG;
+    echo "Created configuration file";
+    sleep 1
+fi;
+
 if [ -e $SETTINGS ]; then
     echo "Settings file = Ok" >> $LOG;
 else
     touch $SETTINGS
-    echo "zipalignduringboot=off" >> $SETTINGS
-    echo "dropcachesduringboot=off" >> $SETTINGS
-    echo "internetspeed=off" >> $SETTINGS
-    echo "ioscheduler=default" >> $SETTINGS
-    echo "sdreadspeed=default" >> $SETTINGS
-    echo "governortweak=off" >> $SETTINGS
+    echo "zipalignduringboot=off" >> $SETTINGS;
+    echo "dropcachesduringboot=off" >> $SETTINGS;
+    echo "internetspeed=off" >> $SETTINGS;
+    echo "ioscheduler=default" >> $SETTINGS;
+    echo "sdreadspeed=default" >> $SETTINGS;
+    echo "governortweak=off" >> $SETTINGS;
     echo "Settings file created" >> $LOG;
     echo "Settings file created"
-    sleep 1
-fi;
-
-if [ -e $CONFIG ]; then
-    echo "Configuration file = Ok" >> $LOG;
-else
-    touch $CONFIG
-    echo "otasupport=off" >> $CONFIG
-    echo "status=firstboot" >> $CONFIG
-    echo "Configuration file created" >> $LOG;
-    echo "Created configuration file"
     sleep 1
 fi;
 
@@ -190,6 +192,15 @@ case "$user_option" in
   echo "user=advanced" >> $CONFIG;;
 esac
 }
+
+check_restore () {
+if [ $(cat $CONFIG | grep "automaticrestore=on" | wc -l) -gt 0 ]; then
+     firstboot;
+else
+     entry;
+fi;
+}
+
 # -------------------------------------------------------------------------
 # Check status of engengis
 # -------------------------------------------------------------------------
@@ -349,12 +360,12 @@ case "$restore_settings" in
   clear
   rm -f $SETTINGS
   touch $SETTINGS
-  echo "zipalignduringboot=off" >> $SETTINGS
-  echo "dropcachesduringboot=off" >> $SETTINGS
-  echo "internetspeed=off" >> $SETTINGS
-  echo "ioscheduler=default" >> $SETTINGS
-  echo "sdreadspeed=default" >> $SETTINGS
-  echo "governortweak=off" >> $SETTINGS
+  echo "zipalignduringboot=off" >> $SETTINGS;
+  echo "dropcachesduringboot=off" >> $SETTINGS;
+  echo "internetspeed=off" >> $SETTINGS;
+  echo "ioscheduler=default" >> $SETTINGS;
+  echo "sdreadspeed=default" >> $SETTINGS;
+  echo "governortweak=off" >> $SETTINGS;
   sed -i '/status=*/ d' $CONFIG;
   echo "status=normal" >> $CONFIG;
   systemtweak_option;;
@@ -390,9 +401,7 @@ echo " 4 - CPU governor settings"
 echo " 5 - Disply resolution (dpi)"
 echo " 6 - Build.prop optimizations"
 echo " 7 - Engengis settings"
-if [ -e /sdcard/engengis-scripts/on ]; then
-   echo " 8 - Script installer"
-fi;
+echo " 8 - Script manager"
 echo
 if [ -e /system/bin/terminal ]; then
     echo " t - Start terminal"
@@ -412,21 +421,7 @@ case "$option" in
   "5") dpimenu;;
   "6") buildpropmenu;;
   "7") settingsmenu;;
-  "8")
-  if [ -e /sdcard/engengis-scripts/on ]; then
-       scriptinstaller;
-  elif [ -d /sdcard/engengis-scripts ]; then
-       touch /sdcard/engengis-scripts/on
-       echo
-       echo "Enabled script intaller"
-       sleep 2
-  else
-       mkdir -p /sdcard/engengis-scripts
-       touch /sdcard/engengis-scripts/on
-       echo
-       echo "Enabled script intaller"
-       sleep 2
-  fi;;
+  "8") script_manager;;
   "t" | "T") 
   if [ -e /system/bin/terminal ]; then
        terminal;
@@ -830,7 +825,7 @@ case "$optiong" in
   "3")
   if [ -e $GOVERNOR ]; then
        rm -f $GOVERNOR
-  fi;
+  if;
   governormenu;;
   "b" | "B") entry;;
   "r" | "R") reboot;;
@@ -858,6 +853,9 @@ if [ -e /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]; then
 fi
 EOF
      chmod 777 $GOVERNOR
+     rm -f $SCREENSTATE;
+     sed -i '/screenstatescaling=*/ d' $SETTINGS;
+     echo "screenstatescaling=off" >> $SETTINGS;
      echo
      echo "Governor set to: $governorinput"
      echo "Do you want to reboot now?"
@@ -874,6 +872,8 @@ case "$governorreboot" in
   "n" | "N") governormenu;;
 esac
 }
+
+
 
 # -------------------------------------------------------------------------
 # Engengis DPI menu
@@ -1106,14 +1106,18 @@ echo "------------------------"
 echo "Engengis.Delta" 
 echo "------------------------"
 echo
-echo " 1 - Script remover"
-echo " 2 - Disable all tweaks"
-echo " 3 - Load tweaks from settings file"
-echo " 4 - Enable recommended settings"
+echo " 1 - Disable all tweaks"
+echo " 2 - Load tweaks from settings file"
+echo " 3 - Enable recommended settings"
 if [ $(cat $CONFIG | grep "otasupport=on" | wc -l) -gt 0 ]; then
-     echo " 5 - Disable OTA update support"
+     echo " 4 - Disable OTA update support"
 else
-     echo " 5 - Enable OTA update support"
+     echo " 4 - Enable OTA update support"
+fi;
+if [ $(cat $CONFIG | grep "automaticrestore=on" | wc -l) -gt 0 ]; then
+     echo " 5 - Disable automatic restore"
+else
+     echo " 5 - Enable automatic restore"
 fi;
 echo " 6 - Log options"
 echo " 7 - Uninstall Engengis"
@@ -1123,11 +1127,10 @@ echo " b - Back"
 echo
 echo -n "Please enter your choice: "; read menu;
 case "$menu" in
-  "1") script_remover;;
-  "2") disablealltweaks;;
-  "3") restorefromfile;;
-  "4") setrecommendedsettings;;
-  "5")
+  "1") disablealltweaks;;
+  "2") restorefromfile;;
+  "3") setrecommendedsettings;;
+  "4")
   if [ $(cat $CONFIG | grep "otasupport=on" | wc -l) -gt 0 ]; then
         sed -i '/otasupport=*/ d' $CONFIG
         echo "otasupport=off" >> $CONFIG
@@ -1136,68 +1139,21 @@ case "$menu" in
         echo "otasupport=on" >> $CONFIG
   fi;
   settingsmenu;;
+  "5")
+  if [ $(cat $CONFIG | grep "automaticrestore=on" | wc -l) -gt 0 ]; then
+        sed -i '/automaticrestore=*/ d' $CONFIG
+        echo "automaticrestore=off" >> $CONFIG
+  else
+        sed -i '/automaticrestore=*/ d' $CONFIG
+        echo "automaticrestore=on" >> $CONFIG
+  fi;
+  settingsmenu;;
   "6") logoptions;;
   "7") uninstallengengis;;
   "8") resetengengis;;
   "9") versioninformation;;
   "b" | "B") entry;;
   "r" | "R") reboot ;;
-esac
-}
-
-script_remover () {
-clear
-echo
-echo "------------------------"
-echo "Engengis.Delta" 
-echo "------------------------"
-echo
-echo "Detected the following files:"
-echo "-------------"
-echo
-ls /system/etc/init.d/
-echo
-echo "-------------"
-echo " 1 - Remove all scripts"
-echo " 2 - Remove one script"
-echo " b - Back"
-echo
-echo -n "Please enter your choice: "; read remove_menu;
-
-case "$remove_menu" in
-  "1")
-  rm -rf /system/etc/init.d
-  mkdir /system/etc/init.d
-  echo
-  echo "All scripts are removed"
-  sleep 2
-  script_remover;;
-  "2")
-  echo
-  echo -n "Please enter a scriptname to remove: "; read script_remover_input;
-  if [ -e /system/etc/init.d/$script_remover_input ]; then
-       echo
-       echo "You selected: $script_remover_input"
-       echo "Are you sure you want to remove it?"
-       echo "[y/n]"
-       read script_remover_choise
-  else
-       echo "There was an input error"
-       echo "Your input doesn't match any files"
-       sleep 2
-       script_remover;
-  fi;;
-  "b" | "B") settingsmenu;;
-esac
-
-case "$script_remover_choise" in
-  "y" | "Y")
-  rm -f /system/etc/init.d/$script_remover_input
-  echo
-  echo "$script_remover_input removed"
-  sleep 2
-  script_remover;;
-  "n" | "N") script_remover;;
 esac
 }
 
@@ -1618,6 +1574,8 @@ case "$rammain" in
   elif [ $(cat $TEMP | grep "systemtweaksmenu" | wc -l) -gt 0 ]; then
        rm -f $TEMP
        systemtweaksmenu;
+  else
+       entry;
   fi;;
 esac
 
@@ -1864,8 +1822,168 @@ esac
 }
 
 # -------------------------------------------------------------------------
-# Script installer
+# Script Manager
 # -------------------------------------------------------------------------
+script_manager () {
+clear
+echo
+echo "------------------------"
+echo "Engengis.Delta" 
+echo "------------------------"
+echo
+echo " 1 - Script remover"
+if [ -e /sdcard/engengis-scripts/placeholder ]; then
+   echo " 2 - Script installer"
+else
+   echo " 2 - Enable script installer"
+fi;
+echo " b - Back"
+echo
+echo "Please enter your choice: "; read script_manager_choice;
+
+case "$script_manager_choice" in
+  "1") script_remover;;
+  "2")
+  if [ -e /sdcard/engengis-scripts/placeholder ]; then
+       scriptinstaller;
+  elif [ -d /sdcard/engengis-scripts ]; then
+       touch /sdcard/engengis-scripts/placeholder
+       echo
+       echo "Enabled script intaller"
+       sleep 2
+       script_manager;
+  else
+       mkdir -p /sdcard/engengis-scripts
+       touch /sdcard/engengis-scripts/placeholder
+       echo
+       echo "Enabled script intaller"
+       sleep 2
+       script_manager;
+  fi;;
+  "b" | "B") entry;;
+esac
+}
+
+script_remover () {
+clear
+echo
+echo "------------------------"
+echo "Engengis.Delta" 
+echo "------------------------"
+echo
+echo "Detected the following files:"
+echo "-------------"
+echo
+ls /system/etc/init.d
+echo
+echo "-------------"
+echo " 1 - Remove all scripts"
+echo " 2 - Remove one script"
+if [ $(cat $CONFIG | grep "user=advanced" | wc -l) -gt 0 ]; then
+     echo " 3 - Set up own path for remover"
+fi;
+echo " b - Back"
+echo
+echo -n "Please enter your choice: "; read remove_menu;
+
+case "$remove_menu" in
+  "1")
+  rm -rf /system/etc/init.d
+  mkdir /system/etc/init.d
+  echo
+  echo "All scripts are removed"
+  sleep 2
+  script_remover;;
+  "2")
+  echo
+  echo -n "Please enter a scriptname to remove: "; read script_remover_input;
+  if [ -e /system/etc/init.d/$script_remover_input ]; then
+       echo
+       echo "You selected: $script_remover_input"
+       echo "Are you sure you want to remove it?"
+       echo "[y/n]"
+       read script_remover_choice
+  else
+       echo "There was an input error"
+       echo "Your input doesn't match any files"
+       sleep 2
+       script_remover;
+  fi;;
+  "3") 
+  if [ $(cat $CONFIG | grep "user=advanced" | wc -l) -gt 0 ]; then
+       script_remover_ownpath_setup;
+  else
+       script_remover
+  fi;;
+  "b" | "B") script_manager;;
+esac
+
+case "$script_remover_choice" in
+  "y" | "Y")
+  rm -f /system/etc/init.d/$script_remover_input
+  echo
+  echo "$script_remover_input removed"
+  sleep 2
+  script_remover;;
+  "n" | "N") script_remover;;
+esac
+}
+
+script_remover_ownpath_setup () {
+clear
+echo
+echo -n "Please give path to start remover: "; read remover_input_path;
+script_remover_ownpath;
+}
+
+script_remover_ownpath () {
+clear
+echo
+echo "------------------------"
+echo "Engengis.Delta" 
+echo "------------------------"
+echo
+echo "Detected the following files:"
+echo "-------------"
+echo
+ls $remover_input_path
+echo
+echo "-------------"
+echo " 1 - Remove a file"
+echo " b - Back"
+echo
+echo -n "Please enter your choice: "; read remove_menu_path;
+
+case "$remove_menu_path" in
+  "1")
+  echo
+  echo -n "Please enter a scriptname to remove: "; read script_remover_input_path;
+  if [ -e $remover_input_path/$script_remover_input_path ]; then
+       echo
+       echo "You selected: $script_remover_input_path"
+       echo "Are you sure you want to remove it?"
+       echo "[y/n]"
+       read script_remover_choice_path
+  else
+       echo "There was an input error"
+       echo "Your input doesn't match any files"
+       sleep 2
+       script_remover_ownpath;
+  fi;;
+  "b" | "B") script_remover;;
+esac
+
+case "$script_remover_choice_path" in
+  "y" | "Y")
+  rm -f $remover_input_path/$script_remover_input_path
+  echo
+  echo "$script_remover_input_path removed"
+  sleep 2
+  script_remover_ownpath;;
+  "n" | "N") script_remover_ownpath;;
+esac
+}
+
 scriptinstaller () {
 clear
 echo
@@ -1911,7 +2029,7 @@ if [ -e /sdcard/engengis-scripts/$script_installer_input ]; then
      fi;
      echo " b - Back"
      echo
-     echo -n "Please enter your option: "; read script_installer_choise;
+     echo -n "Please enter your option: "; read script_installer_choice;
 else
      echo "There was an input error"
      echo "Your input doesn't match any files"
@@ -1919,7 +2037,7 @@ else
      scriptinstaller_procedure
 fi;
 
-case "$script_installer_choise" in
+case "$script_installer_choice" in
   "1")
   chmod 777 /sdcard/engengis-scripts/$script_installer_input
   sh /sdcard/engengis-scripts/$script_installer_input
@@ -1986,7 +2104,7 @@ esac
 }
 
 # -------------------------------------------------------------------------
-check; user; firstboot; entry;
+check; user; check_restore; entry;
 
 
 
