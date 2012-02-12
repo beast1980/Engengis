@@ -8,6 +8,7 @@
 # - Ubuntu (or any other unix based system)
 # - Java (to sign zip file)
 # - zip/unzip (apt-get install zip/apt-get install unzip)
+# - Md5sum
 
 CONFIG=build.conf
 
@@ -85,14 +86,19 @@ read packagename
 echo "Signing package..."
 java -jar signzip/signapk.jar signzip/testkey.x509.pem signzip/testkey.pk8 build/build/engengis.zip build/$packagename.zip
 rm -rf build/build
-echo "Generating md5sum..."
-cd build
-md5sum -t $packagename.zip > $packagename.md5
-sleep 1
+if [ $(cat $CONFIG | grep "include_md5sum=yes" | wc -l) -gt 0 ]; then
+    echo "Generating md5sum..."
+    cd build
+    md5sum -t $packagename.zip > $packagename.md5
+    cd ..
+    sleep 1
+fi;
 echo
 echo "Done find your build at:"
 echo "build/$packagename.zip"
-echo "build/$packagename.md5"
+if [ $(cat $CONFIG | grep "include_md5sum=yes" | wc -l) -gt 0 ]; then
+    echo "build/$packagename.md5"
+fi;
 sleep 3
 echo
 echo "End off build progress."

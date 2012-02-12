@@ -10,7 +10,24 @@ if [ -e $CONFIG ]; then
 fi;
 
 touch $CONFIG
-include_terminal;
+include_md5sum;
+}
+
+include_md5sum () {
+echo
+echo "Do you want to generate md5sum after build?"
+echo "NOTICE works only for linux (for now)"
+echo "[y/n]"
+read includemd5sum;
+
+case "$includemd5sum" in
+  "y" | "Y")
+  echo "include_md5sum=yes" >> $CONFIG
+  include_terminal;;
+  "n" | "N") 
+  echo "include_md5sum=no" >> $CONFIG
+  include_terminal;;
+esac
 }
 
 include_terminal () {
