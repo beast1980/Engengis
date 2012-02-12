@@ -1593,6 +1593,7 @@ case "$reset" in
   rm -f /system/etc/init.d/S07hsstweak
   rm -f /system/etc/init.d/S14zipalign
   rm -f /system/etc/init.d/S21hsstweak
+  rm -f /system/etc/init.d/S21governortweak
   rm -f /system/etc/init.d/S28scheduler
   rm -f /system/etc/init.d/S35sdreadspeed
   rm -f /system/etc/init.d/S42cpugovernor
@@ -2082,32 +2083,22 @@ echo
 ls $remover_input_path
 echo
 echo "-------------"
-echo " 1 - Remove a file"
-echo " b - Back"
-echo
-echo -n "Please enter your choice: "; read remove_menu_path;
-
-case "$remove_menu_path" in
-  "1")
-  echo
-  echo -n "Please enter a scriptname to remove (b for Back): "; read script_remover_input_path;
-  if [ -e $remover_input_path/$script_remover_input_path ]; then
-       if [ $script_remover_input_path = "b" ]; then
-            script_remover_ownpath;
-       fi;
-       echo
-       echo "You selected: $script_remover_input_path"
-       echo "Are you sure you want to remove it?"
-       echo "[y/n]"
-       read script_remover_choice_path
-  else
-       echo "There was an input error"
-       echo "Your input doesn't match any files"
-       sleep 2
-       script_remover_ownpath;
-  fi;;
-  "b" | "B") script_remover;;
-esac
+echo -n "Please enter a scriptname to remove (b for Back): "; read script_remover_input_path;
+if [ -e $remover_input_path/$script_remover_input_path ]; then
+     if [ $script_remover_input_path = "b" ]; then
+          script_remover_ownpath;
+     fi;
+     echo
+     echo "You selected: $script_remover_input_path"
+     echo "Are you sure you want to remove it?"
+     echo "[y/n]"
+     read script_remover_choice_path
+else
+     echo "There was an input error"
+     echo "Your input doesn't match any files"
+     sleep 2
+     script_remover_ownpath;
+fi;
 
 case "$script_remover_choice_path" in
   "y" | "Y")
