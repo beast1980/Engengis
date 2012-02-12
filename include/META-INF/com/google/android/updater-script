@@ -1,5 +1,7 @@
-ui_print("--------------------------------");
-ui_print("By: Redmaner                    ");
+ui_print("********************************");
+ui_print("    Engengis.Delta_v0.5.5.0     ");
+ui_print("********************************");
+ui_print("Installing..");
 show_progress(0.200000, 10);
 run_program("/sbin/busybox", "mount", "/system");
 run_program("/sbin/busybox", "mount", "/data");
@@ -30,6 +32,7 @@ delete("/system/etc/init.d/S42cpugovernor");
 delete("/system/etc/init.d/S49dropcaches");
 delete("/system/etc/init.d/S56internet");
 delete("/system/etc/init.d/S63internetsecurity");
+delete("/system/etc/init.d/S91screenstate_scaling");
 delete("/data/engengis.log");
 delete("/data/zipalign.log");
 delete("/data/zipalign.db");
@@ -38,6 +41,9 @@ show_progress(0.200000, 60);
 package_extract_dir("system", "/system");
 package_extract_dir("data", "/data");
 
+symlink("/system/xbin/sqlite3", "/system/bin/sqlite3");
+symlink("/system/xbin/zipalign", "/system/bin/zipalign");
+
 show_progress(0.200000, 70);
 set_perm_recursive(0, 2000, 0755, 0750, "/system/etc/engengis");
 set_perm(0, 0, 0777, "/system/bin/engengis");
@@ -45,15 +51,14 @@ set_perm(0, 0, 0775, "/system/xbin/sqlite3");
 set_perm(0, 0, 0775, "/system/xbin/zipalign");
 
 show_progress(0.200000, 80);
-run_program("/sbin/busybox", "umount", "/system");
-run_program("/sbin/busybox", "umount", "/data");
+unmount("/system");
+unmount("/data");
 
 show_progress(1.000000, 0);
-ui_print("--------------------------------");
 ui_print(" ");
-ui_print(" ");
-ui_print("--------------------------------");
-ui_print("         Engengis.Delta         ");
-ui_print("--------------------------------");
+ui_print("Done!");
+ui_print("********************************");
+ui_print("          By redmaner           ");
+ui_print("********************************");
 ui_print("           Thank you            ");
-ui_print("--------------------------------");
+ui_print("********************************");
