@@ -1,5 +1,5 @@
 ui_print("********************************");
-ui_print("    Engengis.Delta_v0.5.5.0     ");
+ui_print("    Engengis.Delta_v0.5.5.3     ");
 ui_print("********************************");
 ui_print("Installing..");
 show_progress(0.200000, 10);
@@ -41,14 +41,9 @@ show_progress(0.200000, 60);
 package_extract_dir("system", "/system");
 package_extract_dir("data", "/data");
 
-symlink("/system/xbin/sqlite3", "/system/bin/sqlite3");
-symlink("/system/xbin/zipalign", "/system/bin/zipalign");
-
 show_progress(0.200000, 70);
 set_perm_recursive(0, 2000, 0755, 0750, "/system/etc/engengis");
 set_perm(0, 0, 0777, "/system/bin/engengis");
-set_perm(0, 0, 0775, "/system/xbin/sqlite3");
-set_perm(0, 0, 0775, "/system/xbin/zipalign");
 
 show_progress(0.200000, 80);
 unmount("/system");

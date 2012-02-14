@@ -4,7 +4,7 @@
 
 # Version information
 BUILD=51
-VERSION=v0.5.5.0
+VERSION=v0.5.5.3
 CODENAME=Delta
 AUTHOR=Redmaner
 STATUS=Stable
@@ -26,6 +26,7 @@ CPUGTWEAK=/system/etc/init.d/S21governortweak
 GOVERNOR=/system/etc/init.d/S42cpugovernor
 BPROP=/system/build.prop
 TEMP=/cache/engengis.tmp
+
 
 # -------------------------------------------------------------------------
 # Check requirements to run engengis
@@ -111,15 +112,6 @@ else
     sleep 1
 fi;
 
-if [ -e /system/lib/libncurses.so ]; then
-    echo "libncurses.so detected" >> $LOG
-else
-    cp /system/etc/engengis/libncurses.so /system/lib/libncurses.so
-    chmod 775 /system/lib/libncurses.so
-    echo "Loaded libncurses.so"
-    echo "Loaded libncurses.so" >> $LOG
-fi;
-
 clear
 if [ $(cat $CONFIG | grep "disclaimer=accepted" | wc -l) -gt 0 ]; then
      echo "Disclaimer = Ok" >> $LOG;
@@ -193,6 +185,36 @@ case "$user_option" in
   echo "user=advanced" >> $CONFIG;;
 esac
 }
+
+# -------------------------------------------------------------------------
+# Check resource files
+# -------------------------------------------------------------------------
+if [ -e /system/lib/libncurses.so ]; then
+    echo "libncurses.so detected" >> $LOG
+else
+    cp /system/etc/engengis/resources/libncurses.so /system/lib/libncurses.so
+    chmod 775 /system/lib/libncurses.so
+    echo "Loaded libncurses.so"
+    echo "Loaded libncurses.so" >> $LOG
+fi;
+
+if [ -e /system/xbin/sqlite3 ]; then
+    echo "sqlite3 binary detected" >> $LOG
+else
+    cp /system/etc/engengis/resources/sqlite3 /system/xbin/sqlite3
+    chmod 775 /system/xbin/sqlite3
+    echo "Loaded sqlite3 binary"
+    echo "Loaded sqlite3 binary" >> $LOG
+fi;
+
+if [ -e /system/xbin/zipalign ]; then
+    echo "zipalign binary detected" >> $LOG
+else
+    cp /system/etc/engengis/resources/zipalign /system/xbin/zipalign
+    chmod 775 /system/xbin/zipalign
+    echo "Loaded zipalign binary"
+    echo "Loaded zipalign binary" >> $LOG
+fi;
 
 # ------------------------------------------------------------------------
 # Check password/user --> Option in engengis settings
@@ -872,7 +894,16 @@ case "$optiong" in
         sleep 2
         governormenu;
   fi;;
-  "2") setgovernor;;
+  "2") 
+  if [ -e /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]; then
+       setgovernor_cpu0;
+  elif [ -e /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor ]; then
+       setgovernor_cpu1;
+  elif [ -e /sys/devices/system/cpu/cpufreq/scaling_governor ]; then
+       setgovernor_cpufreq;
+  else
+       echo "Your device is not supported to change cpu governor"
+  fi;;
   "3")
   if [ -e $GOVERNOR ]; then
        rm -f $GOVERNOR
@@ -883,7 +914,7 @@ case "$optiong" in
 esac
 }
 
-setgovernor () {
+setgovernor_cpu0 () {
 clear
 echo
 echo "Current governor: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`" 
@@ -912,22 +943,87 @@ EOF
      echo "screenstatescaling=off" >> $SETTINGS;
      echo
      echo "Governor set to: $governorinput"
-     echo "Do you want to reboot now?"
-     echo "[y/n]"
-     read governorreboot
+     governormenu;
 else
      echo "Kernel doesn't support $governorinput governor"
      sleep 2
      setgovernor;
 fi;
-
-case "$governorreboot" in
-  "y" | "Y") reboot;;
-  "n" | "N") governormenu;;
-esac
 }
 
+setgovernor_cpu1 () {
+clear
+echo
+echo "Current governor: `cat /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor`" 
+echo "Governors supported by kernel:"
+cat /sys/devices/system/cpu/cpu1/cpufreq/scaling_available_governors
+echo
+echo "Please type your governor you want to set (b for Back): ";
+read governorinput;
 
+if [ $governorinput = "b" ]; then
+     governormenu;
+fi;
+if [ $(cat /sys/devices/system/cpu/cpu1/cpufreq/scaling_available_governors | grep "$governorinput" | wc -l) -gt 0 ]; then
+     cat > $GOVERNOR << EOF
+#!/system/bin/sh
+# Copyright (c) 2012, redmaner
+
+# CPUgovernor = $governorinput
+if [ -e /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor ]; then
+        echo "$governorinput" > /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor
+fi
+EOF
+     chmod 777 $GOVERNOR
+     rm -f $SCREENSTATE;
+     sed -i '/screenstatescaling=*/ d' $SETTINGS;
+     echo "screenstatescaling=off" >> $SETTINGS;
+     echo
+     echo "Governor set to: $governorinput"
+     governormenu;
+else
+     echo "Kernel doesn't support $governorinput governor"
+     sleep 2
+     setgovernor;
+fi;
+}
+
+setgovernor_cpufreq () {
+clear
+echo
+echo "Current governor: `cat /sys/devices/system/cpu/cpufreq/scaling_governor`" 
+echo "Governors supported by kernel:"
+cat /sys/devices/system/cpu/cpufreq/scaling_available_governors
+echo
+echo "Please type your governor you want to set (b for Back): ";
+read governorinput;
+
+if [ $governorinput = "b" ]; then
+     governormenu;
+fi;
+if [ $(cat /sys/devices/system/cpu/cpufreq/scaling_available_governors | grep "$governorinput" | wc -l) -gt 0 ]; then
+     cat > $GOVERNOR << EOF
+#!/system/bin/sh
+# Copyright (c) 2012, redmaner
+
+# CPUgovernor = $governorinput
+if [ -e /sys/devices/system/cpu/cpufreq/scaling_governor ]; then
+        echo "$governorinput" > /sys/devices/system/cpu/cpufreq/scaling_governor
+fi
+EOF
+     chmod 777 $GOVERNOR
+     rm -f $SCREENSTATE;
+     sed -i '/screenstatescaling=*/ d' $SETTINGS;
+     echo "screenstatescaling=off" >> $SETTINGS;
+     echo
+     echo "Governor set to: $governorinput"
+     governormenu;
+else
+     echo "Kernel doesn't support $governorinput governor"
+     sleep 2
+     setgovernor;
+fi;
+}
 
 # -------------------------------------------------------------------------
 # Engengis DPI menu
@@ -2184,12 +2280,12 @@ echo "You have entered: $user_input_path"
 if [ -d $user_input_path ]; then
      echo "$script_installer_input will be installed in $user_input_path"
      echo "Are you sure?"
-     echo "[y or n]"
+     echo "[y/n]"
      read install_script_to_path;
 else
      echo "The givin path doesn't exists"
      echo "Do you want to create the path and install it?"
-     echo "[y or n]"
+     echo "[y/n]"
      read create_path_install_script;  
 fi;
 

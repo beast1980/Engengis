@@ -29,8 +29,7 @@ echo "Creating path please wait..."
 sleep 1
 mkdir -p build/build/META-INF/com/google/android
 mkdir -p build/build/system/bin
-mkdir -p build/build/system/etc/engengis
-mkdir -p build/build/system/xbin
+mkdir -p build/build/system/etc/engengis/resources
 mkdir -p build/build/data
 echo
 echo "Starting build...."
@@ -39,7 +38,7 @@ echo "Installing => updated"; cp include/data/updated build/build/data/updated;
 echo "Installing => update-binary"; cp include/META-INF/com/google/android/update-binary build/build/META-INF/com/google/android/update-binary; 
 echo "Installing => updater-script"; cp include/META-INF/com/google/android/updater-script build/build/META-INF/com/google/android/updater-script; 
 echo "Installing => engengis.sh"; cp include/system/bin/engengis.sh build/build/system/bin/engengis;
-echo "Installing => libncurses.so"; cp include/system/etc/engengis/libncurses.so build/build/system/etc/engengis/libncurses.so;
+echo "Installing => libncurses.so"; cp include/system/etc/engengis/resources/libncurses.so build/build/system/etc/engengis/resources/libncurses.so;
 echo "Installing => S00systemtweak.sh"; cp include/system/etc/engengis/S00systemtweak.sh build/build/system/etc/engengis/S00systemtweak;
 echo "Installing => S07hsstweak.sh"; cp include/system/etc/engengis/S07hsstweak.sh build/build/system/etc/engengis/S07hsstweak;
 echo "Installing => S14zipalign.sh"; cp include/system/etc/engengis/S14zipalign.sh build/build/system/etc/engengis/S14zipalign;
@@ -60,8 +59,8 @@ echo "Installing => S49dropcaches.sh"; cp include/system/etc/engengis/S49dropcac
 echo "Installing => S56internet.sh"; cp include/system/etc/engengis/S56internet.sh build/build/system/etc/engengis/S56internet;
 echo "Installing => S63internetsecurity.sh"; cp include/system/etc/engengis/S63internetsecurity.sh build/build/system/etc/engengis/S63internetsecurity;
 echo "Installing => version"; cp include/system/etc/engengis/version build/build/system/etc/engengis/version;
-echo "Installing => sqlite3"; cp include/system/xbin/sqlite3 build/build/system/xbin/sqlite3;
-echo "Installing => zipalign"; cp include/system/xbin/zipalign build/build/system/xbin/zipalign;
+echo "Installing => sqlite3"; cp include/system/etc/engengis/resources/sqlite3 build/build/system/etc/engengis/resources/sqlite3;
+echo "Installing => zipalign"; cp include/system/etc/engengis/resources/zipalign build/build/system/etc/engengis/resources/zipalign;
 if [ $(cat $CONFIG | grep "include_terminal=yes" | wc -l) -gt 0 ]; then
     echo "Installing => terminal.sh"; cp extra/terminal.sh build/build/system/etc/engengis/terminal;
 fi;
